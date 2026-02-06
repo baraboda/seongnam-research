@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성남시 연구논문 분석</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/instantsearch.css@7/themes/satellite-min.css">
+    <script src="https://cdn.jsdelivr.net/npm/algoliasearch@4/dist/algoliasearch-lite.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/instantsearch.js@4"></script>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --text-size: 16px;
+            /* 화성시 브랜딩 컬러 - 딥 네이비 + 골드 어센트 */
+            --primary-900: #0f172a;
+            --primary-800: #1e293b;
+            --primary-700: #334155;
+            --primary-600: #475569;
+            --primary-500: #64748b;
+            --accent-gold: #d97706;
+            --accent-gold-light: #fbbf24;
+            --accent-gold-pale: #fef3c7;
+            --surface-white: #ffffff;
+            --surface-warm: #faf8f5;
+            --surface-card: #ffffff;
+            --border-light: #e2e8f0;
+            --border-warm: #d4c5a9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --problem-bg: #fef2f2;
+            --problem-border: #ef4444;
+            --suggestion-bg: #fffbeb;
+            --suggestion-border: #d97706;
+            --answer-bg: #f0fdf4;
+            --answer-border: #22c55e;
+            --answer-research-bg: #f1f5f9;
+            --answer-research-border: #94a3b8;
+            --analysis-bg: #eff6ff;
+            --analysis-border: #3b82f6;
+            --card-radius: 16px;
+            --section-radius: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--surface-warm);
+            color: var(--text-primary);
+            font-size: var(--text-size);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* ===== 헤더 ===== */
+        .site-header {
+            background: var(--primary-900);
+            color: white;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.3);
+        }
+
+        .header-top {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+        }
+
+        .brand-text h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .brand-text .brand-sub {
+            font-size: 12px;
+            color: var(--accent-gold-light);
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .font-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+        }
+
+        .font-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .font-btn:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* ===== 검색 영역 ===== */
+        .search-area {
+            background: var(--primary-800);
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .search-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px 20px;
+        }
+
+        .ais-SearchBox-form {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            transition: box-shadow 0.3s;
+        }
+
+        .ais-SearchBox-form:focus-within {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2), 0 0 0 3px var(--accent-gold-light);
+        }
+
+        .ais-SearchBox-input {
+            flex: 1;
+            border: none;
+            padding: 16px 20px;
+            font-size: 16px;
+            font-family: 'Noto Sans KR', sans-serif;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .ais-SearchBox-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .ais-SearchBox-submit,
+        .ais-SearchBox-reset,
+        .ais-SearchBox-loadingIndicator {
+            background: none;
+            border: none;
+            padding: 12px 16px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .ais-SearchBox-submit svg,
+        .ais-SearchBox-reset svg {
+            fill: var(--text-muted);
+        }
+
+        /* ===== 통계 바 ===== */
+        .stats-bar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ais-Stats-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .ais-Stats-text strong {
+            color: var(--accent-gold);
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .data-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: var(--accent-gold-pale);
+            border: 1px solid var(--border-warm);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        /* ===== 카드 그리드 ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        .ais-Hits-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 0;
+        }
+
+        @media (min-width: 900px) {
+            .ais-Hits-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ===== 카드 ===== */
+        .card {
+            background: var(--surface-card);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border: 1px solid var(--border-light);
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        /* 카드 헤더 */
+        .card-header {
+            background: var(--primary-900);
+            color: white;
+            padding: 20px 24px 18px;
+            position: relative;
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light), transparent);
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .card-number {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.8);
+            letter-spacing: 0.5px;
+        }
+
+        .card-category {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: var(--accent-gold);
+            color: white;
+        }
+
+        .card-location {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.4;
+            letter-spacing: -0.3px;
+        }
+
+        /* 카드 메타 하단 (처리일시 + 파일명) — 개선점 ① */
+        .card-source-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            flex-wrap: wrap;
+        }
+
+        .source-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 400;
+        }
+
+        .source-tag .tag-icon {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .source-tag .tag-value {
+            color: rgba(255,255,255,0.75);
+            font-weight: 500;
+        }
+
+        /* 카드 바디 */
+        .card-body {
+            padding: 20px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* 공통 섹션 */
+        .card-section {
+            border-radius: var(--section-radius);
+            padding: 16px 18px;
+            font-size: calc(var(--text-size) - 1px);
+            line-height: 1.75;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-content {
+            color: var(--text-secondary);
+            word-break: keep-all;
+            white-space: pre-line;
+        }
+
+        /* 문제점 */
+        .problem-section {
+            background: var(--problem-bg);
+            border-left: 4px solid var(--problem-border);
+        }
+
+        .problem-section .section-label {
+            color: var(--problem-border);
+        }
+
+        /* 제안내용 */
+        .suggestion-section {
+            background: var(--suggestion-bg);
+            border-left: 4px solid var(--suggestion-border);
+        }
+
+        .suggestion-section .section-label {
+            color: var(--suggestion-border);
+        }
+
+        /* 답변사항 — 기본 (집행부 답변 있을 때) */
+        .answer-section {
+            background: var(--answer-bg);
+            border-left: 4px solid var(--answer-border);
+        }
+
+        .answer-section .section-label {
+            color: var(--answer-border);
+        }
+
+        /* 답변사항 — 개선점 ② : 연구보고서 분석일 때 */
+        .answer-section.is-research {
+            background: var(--answer-research-bg);
+            border-left: 4px solid var(--answer-research-border);
+            position: relative;
+        }
+
+        .answer-section.is-research .section-label {
+            color: var(--primary-600);
+        }
+
+        .answer-section.is-research .research-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .answer-section:not(.is-research) .research-badge {
+            display: none;
+        }
+
+        /* 객관적 분석 */
+        .analysis-section {
+            background: var(--analysis-bg);
+            border-left: 4px solid var(--analysis-border);
+        }
+
+        .analysis-section .section-label {
+            color: var(--analysis-border);
+        }
+
+        /* ===== 페이지네이션 — 개선점 ④ ===== */
+        #pagination {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .ais-Pagination-list {
+            display: flex;
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .ais-Pagination-item {
+            list-style: none;
+        }
+
+        .ais-Pagination-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: white;
+            border: 1px solid var(--border-light);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .ais-Pagination-link:hover {
+            background: var(--primary-900);
+            color: white;
+            border-color: var(--primary-900);
+        }
+
+        .ais-Pagination-item--selected .ais-Pagination-link {
+            background: var(--primary-900);
+            color: white;
+            border-color: var(--primary-900);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+        }
+
+        .ais-Pagination-item--disabled .ais-Pagination-link {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* ===== 푸터 ===== */
+        .site-footer {
+            text-align: center;
+            padding: 30px 24px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border-light);
+            background: white;
+        }
+
+        .site-footer a {
+            color: var(--accent-gold);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* ===== 빈 결과 ===== */
+        .empty-state {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ===== 반응형 ===== */
+        @media (max-width: 640px) {
+            .header-top {
+                padding: 16px 16px 12px;
+            }
+
+            .brand-text h1 {
+                font-size: 18px;
+            }
+
+            .search-inner {
+                padding: 12px 16px 16px;
+            }
+
+            .ais-SearchBox-input {
+                font-size: 15px;
+                padding: 14px 16px;
+            }
+
+            .container {
+                padding: 0 12px 40px;
+            }
+
+            .stats-bar {
+                padding: 16px 12px 4px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .card-header {
+                padding: 16px 18px 14px;
+            }
+
+            .card-title {
+                font-size: 15px;
+            }
+
+            .card-body {
+                padding: 16px 18px 20px;
+            }
+
+            .card-section {
+                padding: 14px 14px;
+            }
+
+            .card-source-info {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .ais-Hits-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== 로딩 애니메이션 ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ais-Hits-item {
+            animation: fadeInUp 0.4s ease both;
+        }
+
+        .ais-Hits-item:nth-child(1) { animation-delay: 0.02s; }
+        .ais-Hits-item:nth-child(2) { animation-delay: 0.06s; }
+        .ais-Hits-item:nth-child(3) { animation-delay: 0.10s; }
+        .ais-Hits-item:nth-child(4) { animation-delay: 0.14s; }
+        .ais-Hits-item:nth-child(5) { animation-delay: 0.18s; }
+        .ais-Hits-item:nth-child(6) { animation-delay: 0.22s; }
+        .ais-Hits-item:nth-child(7) { animation-delay: 0.26s; }
+        .ais-Hits-item:nth-child(8) { animation-delay: 0.30s; }
+        .ais-Hits-item:nth-child(9) { animation-delay: 0.34s; }
+        .ais-Hits-item:nth-child(10) { animation-delay: 0.38s; }
+
+        /* Algolia 기본 스타일 오버라이드 */
+        .ais-Hits-item {
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            background: none;
+        }
+
+        .ais-SearchBox {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 헤더 ===== -->
+    <header class="site-header">
+        <div class="header-top">
+            <div class="site-brand">
+                <div class="brand-icon">📊</div>
+                <div class="brand-text">
+                    <!-- 개선점 ⑤ : 화성시 연구논문 브랜딩 -->
+                    <div class="brand-sub">Hwaseong Research Insight</div>
+                    <h1>성남시 연구논문 분석</h1>
+                </div>
+            </div>
+            <div class="header-controls">
+                <div class="font-controls">
+                    <span>글자</span>
+                    <button class="font-btn" onclick="changeFontSize(-1)">A-</button>
+                    <button class="font-btn" onclick="changeFontSize(1)">A+</button>
+                </div>
+            </div>
+        </div>
+        <div class="search-area">
+            <div class="search-inner">
+                <!-- 개선점 ③ : 화성시 맞춤 검색 힌트 -->
+                <div id="searchbox"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== 통계 바 ===== -->
+    <div class="stats-bar">
+        <div id="stats"></div>
+        <div class="data-source-badge">
+            <span>📎</span> 연구보고서 기반 분석
+        </div>
+    </div>
+
+    <!-- ===== 메인 콘텐츠 ===== -->
+    <main class="container">
+        <div id="hits"></div>
+        <div id="pagination"></div>
+    </main>
+
+    <!-- ===== 푸터 ===== -->
+    <footer class="site-footer">
+        <p>성남시 연구논문 분석 카드 · 데이터 출처: 성남시 연구보고서 · Powered by <a href="https://www.algolia.com" target="_blank">Algolia</a></p>
+    </footer>
+
+    <script>
+        // ===== 폰트 크기 조절 =====
+        let currentSize = 16;
+
+        function changeFontSize(delta) {
+            currentSize += delta;
+            if (currentSize < 12) currentSize = 12;
+            if (currentSize > 26) currentSize = 26;
+            document.documentElement.style.setProperty('--text-size', currentSize + 'px');
+            localStorage.setItem('fontSize', currentSize);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSize = localStorage.getItem('fontSize');
+            if (savedSize) {
+                currentSize = parseInt(savedSize);
+                document.documentElement.style.setProperty('--text-size', currentSize + 'px');
+            }
+        });
+
+        // ===== Algolia 설정 =====
+        // ★ 아래 값들을 화성시 전용 Algolia 인덱스로 교체하세요 ★
+        const searchClient = algoliasearch(
+            'X02D3JQ3LS',                     // Algolia App ID
+            '66df50144b6ff51f5e49324905c350ae' // Algolia Search-Only API Key
+        );
+
+        const search = instantsearch({
+            indexName: 'seongnam_research',    // ★ 화성시 연구논문 인덱스명
+            searchClient,
+        });
+
+        // ===== 개선점 ② 헬퍼: 답변사항이 "연구보고서 분석"인지 판별 =====
+        function isResearchAnswer(text) {
+            if (!text) return false;
+            const t = text.trim();
+            return t.includes('연구보고서 분석') || t.includes('집행부 공식 답변 없음');
+        }
+
+        // ===== 개선점 ① 헬퍼: 처리일시 포맷 =====
+        function formatDate(raw) {
+            if (!raw) return '';
+            // "2026. 1. 29. 17시 34분 35초" → "2026.01.29"
+            const match = raw.match(/(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})/);
+            if (match) {
+                const [, y, m, d] = match;
+                return `${y}.${m.padStart(2,'0')}.${d.padStart(2,'0')}`;
+            }
+            return raw;
+        }
+
+        search.addWidgets([
+
+            // 검색바 — 개선점 ③ : 화성시 맞춤 placeholder
+            instantsearch.widgets.searchBox({
+                container: '#searchbox',
+                placeholder: '검색어를 입력하세요 (예: 관광, 교통, 도시계획, 체류시간, 안전)',
+            }),
+
+            // 통계
+            instantsearch.widgets.stats({
+                container: '#stats',
+                templates: {
+                    text: `
+                        {{#hasNoResults}}검색 결과가 없습니다{{/hasNoResults}}
+                        {{#hasOneResult}}1개 분석카드 발견{{/hasOneResult}}
+                        {{#hasManyResults}}총 <strong>{{#helpers.formatNumber}}{{nbHits}}{{/helpers.formatNumber}}</strong>개 분석카드{{/hasManyResults}}
+                    `,
+                },
+            }),
+
+            // 카드 목록
+            instantsearch.widgets.hits({
+                container: '#hits',
+                templates: {
+                    item(hit) {
+                        const isResearch = isResearchAnswer(hit.답변사항);
+                        const answerClass = isResearch ? 'answer-section is-research' : 'answer-section';
+                        const answerIcon = isResearch ? '📋' : '📢';
+                        const answerLabel = isResearch ? '답변사항' : '답변사항';
+                        const researchBadge = '<span class="research-badge">📄 보고서 분석</span>';
+
+                        // 개선점 ① : 처리일시 + 파일명 표시
+                        const dateStr = hit.처리일시 ? formatDate(hit.처리일시) : '';
+                        const fileName = hit.파일명 || '';
+                        const hasSourceInfo = dateStr || fileName;
+
+                        return `
+                            <div class="card">
+                                <div class="card-header">
+                                    <div class="card-meta">
+                                        <span class="card-number">${hit.카드번호 || '-'}</span>
+                                        <span class="card-category">${hit.분류 || '-'}</span>
+                                        <span class="card-location">📍 ${hit.지역 || '화성시'}</span>
+                                    </div>
+                                    <h3 class="card-title">${hit.현안제목 || '제목 없음'}</h3>
+                                    ${hasSourceInfo ? `
+                                        <div class="card-source-info">
+                                            ${dateStr ? `<span class="source-tag"><span class="tag-icon">🕐</span> 분석일시: <span class="tag-value">${dateStr}</span></span>` : ''}
+                                            ${fileName ? `<span class="source-tag"><span class="tag-icon">📎</span> 출처: <span class="tag-value">${fileName}</span></span>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+
+                                <div class="card-body">
+                                    ${hit.문제점 ? `
+                                        <div class="card-section problem-section">
+                                            <div class="section-label">🚨 문제점</div>
+                                            <div class="section-content">${hit.문제점}</div>
+                                        </div>
+                                    ` : ''}
+
+                                    ${hit.제안내용 ? `
+                                        <div class="card-section suggestion-section">
+                                            <div class="section-label">💡 제안내용</div>
+                                            <div class="section-content">${hit.제안내용}</div>
+                                        </div>
+                                    ` : ''}
+
+                                    ${hit.답변사항 ? `
+                                        <div class="card-section ${answerClass}">
+                                            <div class="section-label">${answerIcon} ${answerLabel} ${researchBadge}</div>
+                                            <div class="section-content">${hit.답변사항}</div>
+                                        </div>
+                                    ` : ''}
+
+                                    ${(hit['객관적 분석'] || hit.객관적분석) ? `
+                                        <div class="card-section analysis-section">
+                                            <div class="section-label">📊 객관적 분석</div>
+                                            <div class="section-content">${hit['객관적 분석'] || hit.객관적분석}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    },
+                    empty: `
+                        <div class="empty-state">
+                            <h2>🔍 검색 결과가 없습니다</h2>
+                            <p>다른 키워드로 시도해보세요 (예: 관광, 주거, 교통, 환경)</p>
+                        </div>
+                    `,
+                },
+            }),
+
+            // 페이지네이션 — 개선점 ④ : 97건이라 페이지당 20개
+            instantsearch.widgets.pagination({
+                container: '#pagination',
+            }),
+
+            // 개선점 ④ : 페이지당 표시 수를 20으로 늘림
+            instantsearch.widgets.configure({
+                hitsPerPage: 20,
+            }),
+        ]);
+
+        search.start();
+
+        // ===== Netlify Identity 로그인 체크 =====
+        /*if (window.netlifyIdentity) {
+            netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.location.href = "/login.html";
+                }
+            });
+            netlifyIdentity.on("logout", () => {
+                window.location.href = "/login.html";
+            });
+        } */
+    </script>
+
+</body>
+</html>
